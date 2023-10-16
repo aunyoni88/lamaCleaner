@@ -1,25 +1,24 @@
-from lama_cleaner.tests.test_model import test_lama
 from pathlib import Path
 import cv2
 import torch
-from lama_cleaner.schema import Config, HDStrategy, LDMSampler, SDSampler
+from lama_cleaner.schema import Config, HDStrategy, LDMSampler
 from lama_cleaner.model_manager import ModelManager
 
-
 current_dir = Path(__file__).parent.absolute().resolve()
+image_dir = current_dir / "image"
 save_dir = current_dir / "result"
 save_dir.mkdir(exist_ok=True, parents=True)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 # device = "cpu"
 device = torch.device(device)
 print(f"arif device == {device}")
-imageName = "2"
+imageName = "4"
 
 def get_data(
-    fx: float = 1,
-    fy: float = 1.0,
-    img_p=current_dir / "image1.png",
-    mask_p=current_dir / "mask1.png",
+        fx: float = 1,
+        fy: float = 1.0,
+        img_p=image_dir / f"{imageName}.jpg",
+        mask_p=image_dir / f"{imageName}.1.jpg",
 ):
     img = cv2.imread(str(img_p))
     print(img.size)
@@ -29,7 +28,8 @@ def get_data(
     mask = cv2.resize(mask, None, fx=fx, fy=fy, interpolation=cv2.INTER_NEAREST)
     return img, mask
 
-def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
+
+def image_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
     dim = None
     (h, w) = image.shape[:2]
     if width is None and height is None:
@@ -40,35 +40,34 @@ def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
     else:
         r = width / float(w)
         dim = (width, int(h * r))
-    resized = cv2.resize(image, dim, interpolation = inter)
+    resized = cv2.resize(image, dim, interpolation=inter)
     return resized
 
-def runLama():
-    model = ModelManager(name="lama", device=device)
-    config = Config( ldm_steps=1,
-        ldm_sampler=LDMSampler.plms,
-        hd_strategy=HDStrategy.CROP,
-        hd_strategy_crop_margin=32,
-        hd_strategy_crop_trigger_size=200,
-        hd_strategy_resize_limit=200)
-    fx: float = 1.3
-    fy: float = 1.0
-    img_p = current_dir / f"{imageName}.jpg"
-    mask_p = current_dir / f"{imageName}.1.jpg"
 
-    img, mask = get_data(fx=fx, fy=fy, img_p=img_p, mask_p=mask_p)
-
-    outputImg = model(img, mask, config)
-
-    resizedImage = image_resize(outputImg,height=800)
-
+def show_image(output_img):
+    resized_image = image_resize(output_img, height=800)
     window_name = 'Output Image'
-    cv2.imshow(window_name, resizedImage)
-
+    cv2.imshow(window_name, resized_image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-def runZits():
+
+def run_lama():
+    model = ModelManager(name="lama", device=device)
+    config = Config(ldm_steps=1,
+                    ldm_sampler=LDMSampler.plms,
+                    hd_strategy=HDStrategy.CROP,
+                    hd_strategy_crop_margin=32,
+                    hd_strategy_crop_trigger_size=200,
+                    hd_strategy_resize_limit=200)
+    fx: float = 1.3
+    fy: float = 1.0
+    img, mask = get_data(fx=fx, fy=fy)
+    output_img = model(img, mask, config)
+    show_image(output_img)
+
+
+def run_zits():
     model = ModelManager(name="zits", device=device)
     config = Config(ldm_steps=1,
                     ldm_sampler=LDMSampler.plms,
@@ -80,23 +79,12 @@ def runZits():
 
     fx: float = 1.3
     fy: float = 1.0
-    img_p = current_dir / f"{imageName}.jpg"
-    mask_p = current_dir / f"{imageName}.1.jpg"
-
-    img, mask = get_data(fx=fx, fy=fy, img_p=img_p, mask_p=mask_p)
-
-    outputImg = model(img, mask, config)
-
-    resizedImage = image_resize(outputImg, height=800)
-
-    window_name = 'Output Image'
-    cv2.imshow(window_name, resizedImage)
-
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    img, mask = get_data(fx=fx, fy=fy)
+    output_img = model(img, mask, config)
+    show_image(output_img)
 
 
-def runFcf():
+def run_fcf():
     model = ModelManager(name="fcf", device=device)
     config = Config(ldm_steps=1,
                     ldm_sampler=LDMSampler.plms,
@@ -107,22 +95,12 @@ def runFcf():
 
     fx: float = 2.0
     fy: float = 2.0
-    img_p = current_dir / f"{imageName}.jpg"
-    mask_p = current_dir / f"{imageName}.1.jpg"
+    img, mask = get_data(fx=fx, fy=fy)
+    output_img = model(img, mask, config)
+    show_image(output_img)
 
-    img, mask = get_data(fx=fx, fy=fy, img_p=img_p, mask_p=mask_p)
 
-    outputImg = model(img, mask, config)
-
-    resizedImage = image_resize(outputImg, height=800)
-
-    window_name = 'Output Image'
-    cv2.imshow(window_name, resizedImage)
-
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-def runMat():
+def run_mat():
     no_half = True
     model = ModelManager(name="mat", device=device, no_half=no_half)
     config = Config(ldm_steps=1,
@@ -134,50 +112,29 @@ def runMat():
 
     fx: float = 1.0
     fy: float = 1.0
-    img_p = current_dir / f"{imageName}.jpg"
-    mask_p = current_dir / f"{imageName}.1.jpg"
+    img, mask = get_data(fx=fx, fy=fy)
+    output_img = model(img, mask, config)
+    show_image(output_img)
 
-    img, mask = get_data(fx=fx, fy=fy, img_p=img_p, mask_p=mask_p)
 
-    outputImg = model(img, mask, config)
-
-    resizedImage = image_resize(outputImg, height=800)
-
-    window_name = 'Output Image'
-    cv2.imshow(window_name, resizedImage)
-
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-def runLdm():
+def run_ldm():
     model = ModelManager(name="ldm", device=device)
     config = Config(ldm_steps=10,
                     ldm_sampler=LDMSampler.plms,
                     hd_strategy=HDStrategy.ORIGINAL,
                     hd_strategy_crop_margin=32,
-
                     hd_strategy_crop_trigger_size=200,
                     hd_strategy_resize_limit=200)
 
     fx: float = 1.3
     fy: float = 1.0
-    img_p = current_dir / f"{imageName}.jpg"
-    mask_p = current_dir / f"{imageName}.1.jpg"
+    img, mask = get_data(fx=fx, fy=fy)
+    output_img = model(img, mask, config)
+    show_image(output_img)
 
-    img, mask = get_data(fx=fx, fy=fy, img_p=img_p, mask_p=mask_p)
 
-    outputImg = model(img, mask, config)
-
-    resizedImage = image_resize(outputImg, height=800)
-
-    window_name = 'Output Image'
-    cv2.imshow(window_name, resizedImage)
-
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-# runLama()
-# runZits()
-# runFcf()
-# runMat()
-runLdm()
+# run_lama()
+run_zits()
+# run_fcf()
+# run_mat()
+# run_ldm()
