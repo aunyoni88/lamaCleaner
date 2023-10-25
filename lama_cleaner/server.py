@@ -128,7 +128,6 @@ def get_image_ext(img_bytes):
 def diffuser_callback(i, t, latents):
     socketio.emit("diffusion_progress", {"step": i})
 
-
 @app.route("/save_image", methods=["POST"])
 def save_image():
     if output_dir is None:
