@@ -15,7 +15,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 # device = "cpu"
 device = torch.device(device)
 print(f"arif device == {device}")
-imageName = "7"
+imageName = "16"
 sampler = SDSampler.ddim
 prompt = "An indian women in red sari with wings"
 n_prompt = ""
@@ -104,5 +104,5 @@ def run_anything():
     run_model(model_name=model_n)
 
 
-# run_realistic()
+run_realistic()
 # run_anything()
