@@ -1,6 +1,8 @@
 from pathlib import Path
 import cv2
 import torch
+import contextlib
+import os
 import numpy as np
 from lama_cleaner.schema import Config, HDStrategy, LDMSampler, SDSampler
 from lama_cleaner.model_manager import ModelManager
@@ -63,6 +65,9 @@ def show_image(output_img, width, height):
     resized = cv2.resize(output_img, dim, interpolation=cv2.INTER_AREA)
 
     filename = 'result.jpg'
+    with contextlib.suppress(FileNotFoundError):
+        os.remove(filename)
+
     cv2.imwrite(filename, resized)
 
 
