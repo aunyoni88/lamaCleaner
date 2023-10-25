@@ -3,7 +3,6 @@ import cv2
 import torch
 import numpy as np
 from lama_cleaner.schema import Config, HDStrategy, LDMSampler, SDSampler
-from  lama_cleaner.const import SD15_MODELS
 from lama_cleaner.model_manager import ModelManager
 
 current_dir = Path(__file__).parent.absolute().resolve()
@@ -16,6 +15,9 @@ device = torch.device(device)
 print(f"arif device == {device}")
 imageName = "7"
 sampler = SDSampler.ddim
+prompt = "An indian women in red sari with wings"
+n_prompt = ""
+sd_steps = 100
 
 
 
@@ -63,11 +65,10 @@ def show_image(output_img, width, height):
     filename = 'result.jpg'
     cv2.imwrite(filename, resized)
 
-def run_realistic():
 
-    sd_steps = 50 if device == "cuda" else 10
+def run_model(model_name):
     model = ModelManager(
-        name="realisticVision1.4",
+        name=model_name,
         device=device,
         hf_access_token="",
         sd_run_local=False,
@@ -79,36 +80,24 @@ def run_realistic():
                     ldm_sampler=LDMSampler.plms,
                     hd_strategy=HDStrategy.ORIGINAL,
                     sd_steps=sd_steps,
-                    prompt="Face of a fox, high resolution, sitting on a park bench",
-                    negative_prompt="orange, yellow, small",
+                    prompt=prompt,
+                    negative_prompt=n_prompt,
                     sd_sampler=sampler,
                     sd_match_histograms=True,
                     hd_strategy_crop_margin=32,
                     hd_strategy_crop_trigger_size=200,
                     hd_strategy_resize_limit=200)
-    fx: float = 1.0
-    fy: float = 1.0
-    img, mask, width, height = get_data(fx=fx, fy=fy)
+    img, mask, width, height = get_data()
     output_img = model(img, mask, config)
     show_image(output_img, width, height)
-
+def run_realistic():
+    model_n = "realisticVision1.4"
+    run_model(model_name=model_n)
 
 def run_anything():
-    model = ModelManager(name="anything4", device=device)
-    config = Config(ldm_steps=1,
-                    ldm_sampler=LDMSampler.plms,
-                    hd_strategy=HDStrategy.ORIGINAL,
-                    hd_strategy_crop_margin=32,
-                    hd_strategy_crop_trigger_size=200,
-                    hd_strategy_resize_limit=200,
-                    zits_wireframe=True)
-
-    fx: float = 1.3
-    fy: float = 1.0
-    img, mask, width, height = get_data(fx=fx, fy=fy)
-    output_img = model(img, mask, config)
-    show_image(output_img, width, height)
+    model_n = "anything4"
+    run_model(model_name=model_n)
 
 
-run_realistic()
+# run_realistic()
 # run_anything()
