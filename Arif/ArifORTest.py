@@ -2,7 +2,8 @@ from pathlib import Path
 import cv2
 import torch
 import numpy as np
-from lama_cleaner.schema import Config, HDStrategy, LDMSampler
+from lama_cleaner.schema import Config, HDStrategy, LDMSampler, SDSampler
+from  lama_cleaner.const import SD15_MODELS
 from lama_cleaner.model_manager import ModelManager
 
 current_dir = Path(__file__).parent.absolute().resolve()
@@ -14,6 +15,9 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 device = torch.device(device)
 print(f"arif device == {device}")
 imageName = "7"
+sampler = SDSampler.ddim
+
+
 
 def get_data(
         fx: float = 1.0,
@@ -38,7 +42,6 @@ def image_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
     dim = None
     (h, w) = image.shape[:2]
     if width is None and height is None:
-        
         return image
     if width is None:
         r = height / float(h)
@@ -60,29 +63,38 @@ def show_image(output_img, width, height):
     filename = 'result.jpg'
     cv2.imwrite(filename, resized)
 
-    # window_name = 'Output Image'
-    # cv2.imshow(window_name, resized_image)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+def run_realistic():
 
+    sd_steps = 50 if device == "cuda" else 10
+    model = ModelManager(
+        name="realisticVision1.4",
+        device=device,
+        hf_access_token="",
+        sd_run_local=False,
+        disable_nsfw=False,
+        sd_cpu_textencoder=False,
+    )
 
-def run_lama():
-    model = ModelManager(name="lama", device=device)
     config = Config(ldm_steps=1,
                     ldm_sampler=LDMSampler.plms,
                     hd_strategy=HDStrategy.ORIGINAL,
+                    sd_steps=sd_steps,
+                    prompt="Face of a fox, high resolution, sitting on a park bench",
+                    negative_prompt="orange, yellow, small",
+                    sd_sampler=sampler,
+                    sd_match_histograms=True,
                     hd_strategy_crop_margin=32,
                     hd_strategy_crop_trigger_size=200,
                     hd_strategy_resize_limit=200)
-    fx: float = 1.3
+    fx: float = 1.0
     fy: float = 1.0
     img, mask, width, height = get_data(fx=fx, fy=fy)
     output_img = model(img, mask, config)
     show_image(output_img, width, height)
 
 
-def run_zits():
-    model = ModelManager(name="zits", device=device)
+def run_anything():
+    model = ModelManager(name="anything4", device=device)
     config = Config(ldm_steps=1,
                     ldm_sampler=LDMSampler.plms,
                     hd_strategy=HDStrategy.ORIGINAL,
@@ -98,57 +110,5 @@ def run_zits():
     show_image(output_img, width, height)
 
 
-def run_fcf():
-    model = ModelManager(name="fcf", device=device)
-    config = Config(ldm_steps=1,
-                    ldm_sampler=LDMSampler.plms,
-                    hd_strategy=HDStrategy.ORIGINAL,
-                    hd_strategy_crop_margin=32,
-                    hd_strategy_crop_trigger_size=200,
-                    hd_strategy_resize_limit=200)
-
-    fx: float = 2.0
-    fy: float = 2.0
-    img, mask, width, height = get_data(fx=fx, fy=fy)
-    output_img = model(img, mask, config)
-    show_image(output_img, width, height)
-
-
-def run_mat():
-    no_half = True
-    model = ModelManager(name="mat", device=device, no_half=no_half)
-    config = Config(ldm_steps=1,
-                    ldm_sampler=LDMSampler.plms,
-                    hd_strategy=HDStrategy.ORIGINAL,
-                    hd_strategy_crop_margin=32,
-                    hd_strategy_crop_trigger_size=200,
-                    hd_strategy_resize_limit=200)
-
-    fx: float = 1.0
-    fy: float = 1.0
-    img, mask, width, height = get_data(fx=fx, fy=fy)
-    output_img = model(img, mask, config)
-    show_image(output_img, width, height)
-
-
-def run_ldm():
-    model = ModelManager(name="ldm", device=device)
-    config = Config(ldm_steps=10,
-                    ldm_sampler=LDMSampler.plms,
-                    hd_strategy=HDStrategy.ORIGINAL,
-                    hd_strategy_crop_margin=32,
-                    hd_strategy_crop_trigger_size=200,
-                    hd_strategy_resize_limit=200)
-
-    fx: float = 1.3
-    fy: float = 1.0
-    img, mask, width, height = get_data(fx=fx, fy=fy)
-    output_img = model(img, mask, config)
-    show_image(output_img, width, height)
-
-
-run_lama()
-# run_zits()
-# run_fcf()
-# run_mat()
-# run_ldm()
+run_realistic()
+# run_anything()
